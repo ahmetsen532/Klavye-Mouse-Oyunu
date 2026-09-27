@@ -1,0 +1,80 @@
+const $ = id => document.getElementById(id);
+const canvas = $('world'), ctx = canvas.getContext('2d');
+const words = 'ışık kalem gece yıldız deniz bulut orman umut çiçek köprü rüzgar güneş toprak ağaç yaprak yağmur gölge ateş su taş mavi yeşil kırmızı sessiz hızlı cesur robot kalkan ekran tuş yazı zaman hayat nefes adım yol şehir dünya uzay gemi kuş ses dalga kum dağ vadi bahar sabah akşam yarın bugün dost kitap kapı pencere kalp düş ışın demir çelik enerji sinyal hedef savunma gezegen karanlık macera özgürlük kelebek gökyüzü'.split(' ');
+let w, h, running = false, paused = false, elapsed = 0, spawnTimer = 0, enemies = [], particles = [], beams = [], kills = 0, hp = 3, streak = 0, presses = 0, correct = 0, typedChars = 0, last = 0, muted = false, audio;
+const levels={easy:{name:'Kolay',speed:1.4,growth:.012,interval:2.4,min:1.3,initial:1},medium:{name:'Orta',speed:2.1,growth:.027,interval:1.65,min:.7,initial:2},hard:{name:'Zor',speed:3.1,growth:.03,interval:1.15,min:.55,initial:2}};
+let mode='survival',difficulty='medium';
+function settings(){return levels[difficulty]}
+function spawnInterval(){const level=settings();return Math.max(level.min,level.interval-elapsed*(level.interval-level.min)/60)*(mode==='sprint'?.8:1)}
+function updateSelection(){
+ const sprint=$('mode').value==='sprint';
+ $('modeInfo').textContent=sprint?'Sınırsız can. Robotlar geçse de 60 saniye boyunca yazmaya devam et.':'3 can. Robotları durdur ve 60 saniye boyunca hayatta kal.';
+ $('rules').textContent=sprint?'SINIRSIZ CAN · 60 SANİYE':'3 CAN · 60 SANİYE';
+ $('health').textContent=sprint?'∞':'● ● ●';
+}
+$('mode').addEventListener('change',updateSelection);
+$('menu').onclick=()=>{running=false;paused=false;enemies=[];document.body.classList.remove('finished');$('result').classList.add('hidden');$('overlay').classList.remove('hidden');$('word').value='';$('word').disabled=true;elapsed=0;kills=0;hp=3;hud();updateSelection();$('start').focus();};
+function resize(){w=innerWidth;h=innerHeight;const ratio=Math.min(devicePixelRatio||1,2);canvas.width=w*ratio;canvas.height=h*ratio;ctx.setTransform(ratio,0,0,ratio,0,0)}
+addEventListener('resize',resize);resize();
+function project(x,y,z){const scale=Math.min(w,h)*.95/(z+3);return {x:w/2+x*scale,y:h*.48+(1.35-y)*scale,s:scale};}
+function face(points,color){ctx.beginPath();points.forEach((p,i)=>{const v=project(...p);i?ctx.lineTo(v.x,v.y):ctx.moveTo(v.x,v.y)});ctx.closePath();ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='#a2d6c313';ctx.lineWidth=1;ctx.stroke()}
+function box(x,y,z,sx,sy,sz,color){const a=x-sx/2,b=x+sx/2,c=y-sy/2,d=y+sy/2,e=z-sz/2,f=z+sz/2;face([[a,d,e],[b,d,e],[b,d,f],[a,d,f]],color[1]);face([[a,c,e],[a,c,f],[a,d,f],[a,d,e]],color[2]);face([[b,c,e],[b,d,e],[b,d,f],[b,c,f]],color[2]);face([[a,c,e],[b,c,e],[b,d,e],[a,d,e]],color[0]);}
+function robot(enemy,t,preview=false){const {x,z}=enemy,phase=t*7+enemy.seed,y=Math.sin(phase*2)*.045;const selected=!preview&&$('word').value&&enemy.word.startsWith(normalize($('word').value));const colors=selected?['#667850','#859563','#303e35']:['#344a49','#526765','#1c3033'];
+ const shadow=project(x,0,z);ctx.fillStyle='#0007';ctx.beginPath();ctx.ellipse(shadow.x,shadow.y,shadow.s*.65,shadow.s*.18,0,0,Math.PI*2);ctx.fill();
+ for(const side of [-1,1]){const step=Math.sin(phase)*side;box(x+side*.23,.4+y,z+step*.18,.25,.75,.3,colors);box(x+side*.25,.09,z-.1+step*.18,.3,.18,.5,colors);box(x+side*.63,1.1+y+step*.07,z-step*.17,.23,.77,.28,colors);}
+ box(x,1.18+y,z,.91,.87,.46,colors);box(x,1.91+y,z,.66,.54,.53,colors);box(x,1.96+y,z-.28,.48,.095,.04,['#d1ff83','#eeffc2','#9bc367']);box(x,1.3+y,z-.25,.18,.2,.04,['#c5ff77','#c5ff77','#c5ff77']);
+ if(!preview){const p=project(x,2.52+y,z);p.x=w/2+x*Math.max(p.s,w<700?85:75);ctx.font=`600 ${Math.max(14,Math.min(24,p.s*.26))}px Arial`;const tw=ctx.measureText(enemy.word).width;ctx.fillStyle=selected?'#ceff72':'#102024ee';ctx.strokeStyle=selected?'#eaffc9':'#6e897b';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(p.x-tw/2-14,p.y-19,tw+28,35,5);ctx.fill();ctx.stroke();ctx.fillStyle=selected?'#172414':'#f1f9ed';ctx.textAlign='center';ctx.fillText(enemy.word,p.x,p.y+5);}
+}
+let wrongAttempts=0, missedCount=0, attemptWrong=false, activeTarget=null;
+function normalize(value){return value.normalize('NFC').toLocaleLowerCase('tr-TR').trim()}
+function resetAttempt(){attemptWrong=false;activeTarget=null;document.querySelector('.inputBox').classList.remove('wrong');}
+function resetAnalysis(){wrongAttempts=0;missedCount=0;resetAttempt();document.body.classList.remove('finished');}
+function showAnalysis(){
+ document.body.classList.add('finished');
+ $('rKills').textContent=kills;
+ $('rSpeed').textContent=(elapsed>0?kills/elapsed:0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+ $('rErrors').textContent=wrongAttempts;
+ $('rMissed').textContent=missedCount;
+}
+function tone(freq=440,duration=.09){if(muted)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='triangle';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(freq*.45,audio.currentTime+duration);g.gain.setValueAtTime(.065,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch{}}
+function spawn(){const used=new Set(enemies.map(e=>e.word));const pool=words.filter(word=>!Array.from(used).some(active=>active.startsWith(word)||word.startsWith(active)));if(!pool.length)return;const word=pool[Math.floor(Math.random()*pool.length)];const lanes=w<700?[-1.3,0,1.3]:[-2.7,-1.35,0,1.35,2.7];const free=lanes.filter(x=>!enemies.some(e=>e.x===x&&e.z>13));const choices=free.length?free:lanes;enemies.push({x:choices[Math.floor(Math.random()*choices.length)],z:19,word,seed:Math.random()*10,speed:(settings().speed+elapsed*settings().growth)*(mode==='sprint'?1.1:1)});}
+function hud(){$('time').innerHTML=`${Math.max(0,Math.ceil(60-elapsed))}<span>sn</span>`;$('score').textContent=kills;$('health').textContent=mode==='sprint'?'∞':Array.from({length:3},(_,i)=>i<hp?'●':'○').join(' ');$('combo').textContent=streak>=3?`${streak} KESİNTİSİZ ATIŞ`:'';}
+function start(){mode=$('mode').value==='sprint'?'sprint':'survival';difficulty=Object.hasOwn(levels,$('difficulty').value)?$('difficulty').value:'medium';resetAnalysis();running=true;paused=false;last=performance.now();elapsed=0;spawnTimer=spawnInterval();enemies=[];particles=[];beams=[];kills=0;hp=3;streak=0;presses=0;correct=0;typedChars=0;$('overlay').classList.add('hidden');$('result').classList.add('hidden');document.body.classList.add('playing');$('word').disabled=false;$('word').value='';$('word').focus();$('hint').textContent='Kelime tamamlanınca otomatik ateş edilir';for(let i=0;i<settings().initial;i++)spawn();$('rules').textContent=(mode==='sprint'?'SINIRSIZ CAN':'3 CAN')+' · '+settings().name.toLocaleUpperCase('tr-TR')+' · 60 SANİYE';hud();tone(550);}
+function finish(){running=false;paused=false;$('word').disabled=true;document.body.classList.remove('playing');$('result').classList.remove('hidden');$('resultTag').textContent=hp>0?'GÖREV TAMAMLANDI':'SAVUNMA HATTI DÜŞTÜ';$('resultTitle').textContent=hp>0?'Hattı korudun.':'Bir şans daha.';$('resultText').textContent=hp>0?'60 saniye boyunca direndin. Bir sonraki nöbete hazır mısın?':'Robotlar savunmayı aştı. Yeniden dene, kelimelere odaklan.';$('rKills').textContent=kills;$('hint').textContent='Yeni bir tur için tekrar oyna';if(mode==='sprint'){$('resultTag').textContent='60 SANİYE TAMAMLANDI';$('resultTitle').textContent='Süre doldu.';$('resultText').textContent='Hız turu · '+settings().name+' — yeni bir rekor için tekrar dene.';}showAnalysis();}
+$('start').onclick=start;$('again').onclick=start;
+$('sound').onclick=()=>{muted=!muted;$('sound').textContent=`SES: ${muted?'KAPALI':'AÇIK'}`;if(!muted)tone()};
+$('word').addEventListener('paste',event=>event.preventDefault());
+function handleInput(event={}){
+ if(!running||paused||event.isComposing)return;
+ const value=normalize($('word').value);
+ if(!value){resetAttempt();$('hint').textContent='Kelime tamamlanınca otomatik ateş edilir';return;}
+ const matches=enemies.filter(e=>e.word.startsWith(value));
+ if(matches.length)activeTarget=matches.length===1?matches[0]:null;
+ const enemy=enemies.find(e=>e.word===value);
+ if(enemy){
+  kills++;streak++;typedChars+=enemy.word.length;
+  beams.push({x:enemy.x,y:1.3,z:enemy.z,life:.18});
+  for(let i=0;i<22;i++)particles.push({x:enemy.x,y:1.2,z:enemy.z,vx:(Math.random()-.5)*4,vy:Math.random()*4,vz:(Math.random()-.5)*4,life:.7});
+  enemies=enemies.filter(e=>e!==enemy);$('word').value='';resetAttempt();
+  $('hint').textContent='Hedef yok edildi — sıradaki kelimeyi yaz';tone(700);hud();
+ }else if(!matches.length){
+  if(!attemptWrong && !event.inputType?.startsWith('delete')){wrongAttempts++;attemptWrong=true;}
+  streak=0;$('hint').textContent='Eşleşme yok — Backspace ile düzelt';
+  hud();
+ }else{
+  document.querySelector('.inputBox').classList.remove('wrong');
+  $('hint').textContent='Kelime tamamlanınca otomatik ateş edilir';
+ }
+}
+$('word').addEventListener('input',handleInput);
+$('word').addEventListener('compositionend',()=>handleInput());
+function pause(){if(!running)return;paused=!paused;last=performance.now();$('word').disabled=paused;$('hint').textContent=paused?'DURAKLATILDI — ESC ile devam et':'Kelime tamamlanınca otomatik ateş edilir';if(!paused)$('word').focus()}
+addEventListener('blur',()=>{if(running&&!paused)pause()});
+addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();pause()}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&running&&!paused)pause()});
+function background(t){const gradient=ctx.createLinearGradient(0,0,0,h);gradient.addColorStop(0,'#070e16');gradient.addColorStop(.5,'#152a2c');gradient.addColorStop(1,'#091418');ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);const horizon=project(0,0,60).y;ctx.fillStyle='#3b615829';ctx.fillRect(0,horizon-2,w,3);for(let i=-11;i<=11;i++){const height=1.5+((i*i*13)%11)*.35;box(i*2.1,height/2,35+(Math.abs(i)%3)*4,1.2,height,1.3,['#102126','#182d30','#0b1b22']);}ctx.strokeStyle='#618e7930';ctx.lineWidth=1;for(let x=-16;x<=16;x+=2){const a=project(x,0,0),b=project(x,0,50);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}for(let z=0;z<50;z+=2){const a=project(-25,0,z),b=project(25,0,z);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}for(const x of [-4.4,4.4]){const a=project(x,.02,0),b=project(x,.02,45);ctx.strokeStyle='#ceff7250';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}ctx.fillStyle='#ceeeb340';for(let i=0;i<35;i++){const x=(i*137.3)%w,y=(i*79.7+t*5)%h;ctx.fillRect(x,y,1,1)}}
+function advanceGame(seconds){let remaining=Math.min(Math.max(0,seconds),60-elapsed);while(remaining>1e-8&&running&&!paused){const dt=Math.min(.05,remaining);remaining-=dt;elapsed=Math.min(60,elapsed+dt);if(elapsed>60-1e-8)elapsed=60;spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=spawnInterval()}for(const e of enemies)e.z-=e.speed*dt;const impacts=enemies.filter(e=>e.z<.8);if(impacts.length){missedCount+=impacts.length;
+ if(impacts.includes(activeTarget)||(!activeTarget&&normalize($('word').value)&&impacts.some(e=>e.word.startsWith(normalize($('word').value)))&&!enemies.some(e=>!impacts.includes(e)&&e.word.startsWith(normalize($('word').value))))){$('word').value='';resetAttempt();$('hint').textContent='Hedef sana ulaştı — sıradaki kelimeyi yaz';}
+ if(mode==='survival')hp=Math.max(0,hp-impacts.length);streak=0;enemies=enemies.filter(e=>e.z>=.8);if(mode==='survival')tone(110,.12)}hud();if((mode==='survival'&&hp<=0)||elapsed>=60)finish();}}
+function frame(now){const seconds=Math.max(0,(now-last)/1000),dt=Math.min(seconds,.05);last=now;const t=now/1000;background(t);if(running&&!paused)advanceGame(seconds);
+ if(!running&&$('result').classList.contains('hidden')){robot({x:-3.2,z:7,seed:1},t,true);robot({x:3.1,z:10,seed:3},t,true);robot({x:.7,z:19,seed:5},t,true)}
+ enemies.sort((a,b)=>b.z-a.z).forEach(e=>robot(e,elapsed));for(const b of beams){if(!paused)b.life-=dt;const p=project(b.x,b.y,b.z);ctx.strokeStyle=`rgba(206,255,114,${Math.max(0,b.life/.18)})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(w/2,h*.88);ctx.lineTo(p.x,p.y);ctx.stroke()}beams=beams.filter(b=>b.life>0);for(const p of particles){if(!paused){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=8*dt}const v=project(p.x,p.y,p.z);ctx.fillStyle=`rgba(206,255,114,${Math.max(0,p.life/.7)})`;ctx.fillRect(v.x,v.y,3,3)}particles=particles.filter(p=>p.life>0);if(paused){ctx.fillStyle='#06111699';ctx.fillRect(0,h*.4,w,80);ctx.fillStyle='#ceff72';ctx.textAlign='center';ctx.font='bold 22px Arial';ctx.fillText('DURAKLATILDI',w/2,h*.4+48)}requestAnimationFrame(frame)}requestAnimationFrame(frame);

@@ -1,0 +1,38 @@
+/* Alignment fixes apply even when decorative motion is disabled. */
+#start,#mouseStart {position:relative;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;padding-left:38px;padding-right:38px;min-height:44px;}
+#start>span,#mouseStart>span {position:absolute;right:15px;top:50%;transform:translateY(-50%);float:none;margin:0;line-height:1;font-size:18px;}
+.headerActions{display:flex;align-items:center;gap:9px}
+#motionToggle{font-size:8px;letter-spacing:.6px;white-space:nowrap;padding:12px 10px}
+@media(max-width:650px){header{flex-wrap:wrap;justify-content:space-between;gap:8px;height:100px;padding:10px 0}.headerActions{gap:5px}#motionToggle{padding:10px 7px;font-size:7px}.headerActions #sound{font-size:8px;padding:10px 7px}.trainingNav a{padding:9px}.mousePage header{height:auto;min-height:100px}.mousePage .mouseBadge{display:none}}
+/* Optional decoration only: target movement and gameplay are untouched. */
+@media(prefers-reduced-motion:no-preference){
+ .motion-on button,.motion-on .trainingNav a,.motion-on select{transition:background-color .2s,border-color .2s,box-shadow .2s,filter .2s}
+ .motion-on .primary{box-shadow:0 4px 20px #ceff7210;transition:box-shadow .2s,filter .2s}
+ .motion-on .primary:hover{box-shadow:0 6px 26px #ceff7238}
+ .motion-on .primary:active{filter:brightness(.94)}
+ .motion-on .trainingNav a:hover{background:transparent;color:var(--lime)}
+ .motion-on .exercise{transition:border-color .25s,background-color .25s,box-shadow .25s}
+ .motion-on .exercise:hover{border-color:#ceff7277;box-shadow:inset 0 0 24px #ceff7207}
+ .motion-on .exerciseIcon{transition:transform .25s}
+ .motion-on .exercise:hover .exerciseIcon{transform:rotate(12deg) scale(1.08)}
+ .motion-on #overlay:not(.hidden)>*,.motion-on .mouseHeading,.motion-on #setup:not(.hidden),.motion-on #result:not(.hidden)>*,.motion-on #mouseResult:not(.hidden)>*{animation:soft-arrival .5s ease-out both}
+ .motion-on #overlay h1,.motion-on #result h1,.motion-on #mouseResult h2{animation-delay:.06s}
+ .motion-on #overlay .gameOptions,.motion-on #result .results,.motion-on .mouseStats{animation-delay:.12s}
+ .motion-on #overlay #start,.motion-on .resultButtons{animation-delay:.18s}
+ .motion-on .guideCircle{animation:gentle-beacon 3.5s ease-in-out infinite}
+ .motion-on .mouseHeading em{animation:title-light 4s ease-in-out infinite}
+ .motion-on body.playing #sound,.motion-on body.training button{transition:none}
+ @keyframes soft-arrival{from{opacity:0;translate:0 9px}to{opacity:1;translate:0 0}}
+ @keyframes gentle-beacon{0%,100%{box-shadow:0 0 0 10px #ceff7205}50%{box-shadow:0 0 0 18px #ceff720a,0 0 24px #ceff7210}}
+ @keyframes title-light{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 24px #ceff722b}}
+}
+
+/* A restrained content-only slide; the header and navigation stay anchored. */
+html.page-sliding{overflow:hidden}html.page-sliding>body{pointer-events:none;min-height:100vh}
+@media(prefers-reduced-motion:no-preference){
+ .motion-on.content-slide-out-left main,.motion-on.content-slide-out-left footer{animation:content-out-left .18s ease-in forwards}
+ .motion-on.content-slide-out-right main,.motion-on.content-slide-out-right footer{animation:content-out-right .18s ease-in forwards}
+ @keyframes content-out-left{to{opacity:.35;transform:translateX(-28px)}}
+ @keyframes content-out-right{to{opacity:.35;transform:translateX(28px)}}
+}
+html.slide-preview *,html.slide-preview *::before,html.slide-preview *::after{animation:none!important}
