@@ -1,4 +1,5 @@
 (() => {
+const tr = typeof translate === 'function' ? translate : text => text;
   const key = 'son-hat-interface-motion';
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
   const button = document.getElementById('motionToggle');
@@ -7,9 +8,9 @@
   let enabled = saved === null ? !preference.matches : saved === 'on';
   function apply() {
     document.documentElement.classList.toggle('motion-on', enabled && !preference.matches);
-    button.textContent = `ANİMASYON: ${enabled && !preference.matches ? 'AÇIK' : 'KAPALI'}`;
+    button.textContent = `${tr('ANİMASYON:')} ${enabled && !preference.matches ? tr('AÇIK') : tr('KAPALI')}`;
     button.setAttribute('aria-pressed', String(enabled && !preference.matches));
-    button.title = preference.matches ? 'Sistemindeki azaltılmış hareket tercihi etkin.' : 'Menü ve düğme efektlerini aç / kapat';
+    button.title = preference.matches ? tr('Sistemindeki azaltılmış hareket tercihi etkin.') : tr('Menü ve düğme efektlerini aç / kapat');
   }
   button.addEventListener('click', () => {
     enabled = !document.documentElement.classList.contains('motion-on');

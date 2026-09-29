@@ -1,6 +1,6 @@
 /* Alignment fixes apply even when decorative motion is disabled. */
-#start,#mouseStart {position:relative;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;padding-left:38px;padding-right:38px;min-height:44px;}
-#start>span,#mouseStart>span {position:absolute;right:15px;top:50%;transform:translateY(-50%);float:none;margin:0;line-height:1;font-size:18px;}
+#start,#mouseStart,#again,#mouseAgain {position:relative;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;padding-left:38px;padding-right:38px;min-height:44px;}
+#start>span,#mouseStart>span,#again>span,#mouseAgain>span {position:absolute;right:15px;top:50%;transform:translateY(-50%);float:none;margin:0;line-height:1;font-size:18px;}
 .headerActions{display:flex;align-items:center;gap:9px}
 #motionToggle{font-size:8px;letter-spacing:.6px;white-space:nowrap;padding:12px 10px}
 @media(max-width:650px){header{flex-wrap:wrap;justify-content:space-between;gap:8px;height:100px;padding:10px 0}.headerActions{gap:5px}#motionToggle{padding:10px 7px;font-size:7px}.headerActions #sound{font-size:8px;padding:10px 7px}.trainingNav a{padding:9px}.mousePage header{height:auto;min-height:100px}.mousePage .mouseBadge{display:none}}
@@ -36,3 +36,53 @@ html.page-sliding{overflow:hidden}html.page-sliding>body{pointer-events:none;min
  @keyframes content-out-right{to{opacity:.35;transform:translateX(28px)}}
 }
 html.slide-preview *,html.slide-preview *::before,html.slide-preview *::after{animation:none!important}
+/* Keep navigation centered independently of the left/right content widths. */
+header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px}
+header>.brand{justify-self:start}
+header>.trainingNav{justify-self:center}
+header>.headerActions{justify-self:end;display:flex;align-items:center;flex-wrap:nowrap;margin:0;gap:8px}
+.headerActions #language,.headerActions #motionToggle,.headerActions #sound{
+ box-sizing:border-box;height:36px;margin:0;padding:0 10px;
+ border:1px solid #ffffff25;border-radius:5px;background-color:#101c20;color:#d9e1de;
+ font-family:Arial,Helvetica,sans-serif;font-size:8px;font-weight:700;line-height:normal;
+ letter-spacing:.6px;white-space:nowrap;text-transform:uppercase;
+}
+.headerActions #language{cursor:pointer;max-width:none;min-width:88px}
+.headerActions #language:hover{filter:brightness(1.15)}
+.headerActions #language:focus-visible{outline:2px solid var(--lime);outline-offset:4px}
+@media(max-width:760px){
+ header,.mousePage header{grid-template-columns:minmax(0,1fr) auto;height:112px;min-height:112px;padding:8px 0;gap:8px}
+ header>.headerActions{grid-column:2;grid-row:1;gap:5px}
+ header>.trainingNav{grid-column:1 / -1;grid-row:2;justify-self:center}
+ .headerActions #language,.headerActions #motionToggle,.headerActions #sound{padding:0 7px;font-size:7px;height:32px}
+ .headerActions #language{min-width:76px}
+ .hud{top:128px}
+}
+@media(max-width:420px){
+ header,.mousePage header{margin-left:3%;margin-right:3%}
+ header>.brand{font-size:16px;letter-spacing:1px}
+ .headerActions #language,.headerActions #motionToggle,.headerActions #sound{padding:0 5px;letter-spacing:.2px}
+ .headerActions #language{min-width:68px}
+}
+/* Dark dropdowns, with a styled native picker in supporting browsers. */
+select{color-scheme:dark}
+select option{background:#101c20;color:#d9e1de;font-family:Arial,Helvetica,sans-serif}
+select option:checked{background:#203129;color:#ceff72}
+@supports (appearance:base-select){
+ select,select::picker(select){appearance:base-select}
+ select::picker(select){background:#101c20;color:#d9e1de;border:1px solid #354a46;border-radius:8px;padding:5px;margin-top:6px;box-shadow:0 12px 28px #0006;font:12px Arial,Helvetica,sans-serif}
+ select option{padding:10px 12px;border-radius:4px;cursor:pointer;line-height:1.4;letter-spacing:.3px}
+ select option:hover,select option:focus{background:#1b2a29;color:#eff6ee;outline:none}
+ select option:checked{background:#203129;color:#ceff72}
+ select option::checkmark{color:#ceff72}
+ select::picker-icon{color:#8d9f97}
+}
+@supports (appearance:base-select){
+ #language,.gameOptions select,.mouseSettings select{display:inline-flex;align-items:center;justify-content:space-between;gap:12px}
+}
+.headerActions #scoresOpen{height:36px;padding:0 10px;font:700 8px Arial,Helvetica,sans-serif;letter-spacing:.6px;white-space:nowrap}
+.scoresDialog{width:min(700px,92vw);max-height:82vh;overflow:auto;background:#0d1b1f;color:#e5eee8;border:1px solid #3b5146;border-radius:12px;padding:24px;box-shadow:0 24px 80px #0009;scrollbar-color:#405649 #0d1b1f}
+.scoresDialog::backdrop{background:#030b10b8;backdrop-filter:blur(4px)}
+.scoresTop{display:flex;align-items:center;justify-content:space-between;gap:16px}.scoresTop h2{margin:0;color:var(--lime);font-size:25px}.scoresDialog h3{margin:26px 0 12px;font-size:16px}.scoresDialog p{font-size:12px;line-height:1.7;color:#91a69c}.scoreEntry{border:1px solid #2d4239;border-radius:7px;background:#122125;margin:8px 0;padding:12px}.scoreEntry summary{cursor:pointer;font-size:12px;line-height:1.7}.scoreEntry summary strong{float:right;color:var(--lime);margin-left:12px}.scoreMetrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0 4px}.scoreMetrics dt{font-size:11px;color:#91a69c}.scoreMetrics dd{font-size:20px;margin:6px 0;color:#e5eee8}
+@media(min-width:761px) and (max-width:1050px){header,.mousePage header{height:112px;grid-template-columns:1fr auto;padding:8px 0}header>.headerActions{grid-column:2;grid-row:1}header>.trainingNav{grid-column:1/-1;grid-row:2}.hud{top:128px}}
+@media(max-width:760px){header>.headerActions{flex-wrap:wrap;max-width:270px}.headerActions #scoresOpen{height:32px;font-size:7px;padding:0 7px}.scoreMetrics{grid-template-columns:repeat(2,1fr)}.scoreEntry summary strong{float:none;display:block;margin-left:0}}

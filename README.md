@@ -2,7 +2,7 @@
 
 **Kelimeleri yaz, robotları durdur. Hedefleri yakala, mouse kontrolünü çalış.**
 
-Son Hat, yazma hızı ve mouse kontrolü üzerine kısa antrenmanlar sunan, tarayıcıda çalışan bir oyun projesidir. Klavye bölümünde yaklaşan robotları üzerlerindeki Türkçe kelimeleri yazarak durdurur; mouse bölümünde isabet ve hareketli hedef takibi çalışırsın.
+Son Hat, yazma hızı ve mouse kontrolü üzerine kısa antrenmanlar sunan, tarayıcıda çalışan bir oyun projesidir. Klavye bölümünde yaklaşan robotları üzerlerindeki Türkçe veya İngilizce kelimeleri yazarak durdurur; mouse bölümünde isabet ve hareketli hedef takibi çalışırsın.
 
 ## Klavye: Kelime Savunması
 
@@ -67,3 +67,13 @@ Bu GitHub Pages sürümünde Node.js kurulumu, paket yükleme veya derleme adım
 ## Geri bildirim
 
 Bir hata fark edersen veya yeni bir egzersiz fikrin varsa [Issues bölümünden](https://github.com/ahmetsen532/Klavye-Mouse-Oyunu/issues) paylaşabilirsin. Hata bildirimine kullandığın tarayıcıyı, oyun modunu ve sorunun nasıl oluştuğunu eklemen yardımcı olur.
+
+## Dil seçimi ve kişisel skorlar
+
+Üst menüden Türkçe veya English seçebilirsin. Arayüz, sonuçlar ve klavye oyunundaki kelimeler seçtiğin dile göre değişir. Türkçe havuzunda 273, İngilizce havuzunda 550 kelime bulunur. Dil tercihi hatırlanır; aktif tur sırasında değiştirilemez.
+
+Skorlarım paneli son 5 tamamlanan turu ve kişisel rekorlarını gösterir. Bir kayda tıklayarak ayrıntılı istatistikleri açabilirsin. Rekorlar mod, zorluk, dil ve tur süresine göre ayrı tutulur. Oyun sırasında paneli açmak turu duraklatır.
+
+Kayıtlar sunucuya gönderilmeden tarayıcının localStorage alanında saklanır. Siteyi kapatınca korunur; tarayıcı verileri temizlenirse silinir. Farklı cihazlar ve site adresleri arasında otomatik aktarılmaz. Yerel geliştirme sürümündeki skorlar yayınlanan siteye taşınmaz.
+
+Çeviriler `language.js`, skor kayıtları ve paneli `scores.js` dosyalarındadır.
