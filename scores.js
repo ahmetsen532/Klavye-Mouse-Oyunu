@@ -15,7 +15,10 @@
   }
   const group = r => [r.kind,r.mode,r.difficulty,r.language,r.duration].join(':');
   const score = r => r.kind === 'keyboard' ? r.stats.correct : r.mode === 'click' ? r.stats.hits : r.stats.tracking;
+  function enabled(){try{return localStorage.getItem('son-hat-save-scores')==='on';}catch{return false;}}
+  function clear(){localStorage.removeItem(key);memory=empty();storageFailed=false;}
   function save(result) {
+    if(!enabled())return;
     if (!valid(result)) return;
     const data = read(), entry = {...result,date:new Date().toISOString()};
     data.recent = [entry,...data.recent].slice(0,5);
@@ -24,7 +27,7 @@
     memory = data;
     try { localStorage.setItem(key,JSON.stringify(data)); storageFailed = false; } catch { storageFailed = true; }
   }
-  const api = {read,save,group,score};
+  const api = {read,save,group,score,enabled,clear};
   if (typeof module !== 'undefined' && module.exports) { module.exports=api; return; }
   window.ScoreHistory=api;
   const en = typeof language !== 'undefined' && language === 'en';
@@ -59,6 +62,13 @@
     if(typeof running!=='undefined'&&running&&!paused)pause();
     else if(typeof round!=='undefined'&&round&&!round.done&&!paused)pause();
     content.replaceChildren();const data=read();
+    const setting=node('label',undefined,'scorePreference'),check=node('input');check.type='checkbox';check.checked=enabled();
+    setting.append(check,document.createTextNode(t('Skorlarımı bu cihazda hatırla','Remember my scores on this device')));content.append(setting);
+    const status=node('p');status.setAttribute('role','status');
+    check.onchange=()=>{try{localStorage.setItem('son-hat-save-scores',check.checked?'on':'off');status.textContent=t('Tercihin kaydedildi. Kapatmak eski kayıtları silmez.','Preference saved. Turning this off does not delete older records.');}catch{check.checked=enabled();status.textContent=t('Tarayıcı tercihi kaydedemedi.','Your browser could not save the preference.');}};
+    const remove=node('button',t('Skor kayıtlarını sil','Delete score history'));remove.type='button';remove.onclick=()=>{if(!confirm(t('Tüm skor geçmişin ve rekorların silinsin mi? Bu işlem geri alınamaz.','Delete all score history and personal bests? This cannot be undone.')))return;try{clear();dialog.close();open.click();}catch{status.textContent=t('Kayıtlar silinemedi. Tarayıcı ayarlarından site verilerini temizleyebilirsin.','Could not delete records. You can clear site data in browser settings.');}};
+    content.append(remove,status);
+    if(!enabled())content.append(node('p',t('Skor kaydı kapalı. İstersen yukarıdan açabilirsin; oyun sonuçları her tur sonunda yine gösterilir.','Score saving is off. Enable it above if you wish; round results are still shown after each game.')));
     content.append(node('p',storageFailed?t('Tarayıcı kayıt yapamadı. Bu oturumdaki skorlar kapanınca kaybolabilir.','Browser storage failed. Scores from this session may be lost when you close it.'):t('Bu tarayıcıda saklanır. Tarayıcı verileri silinirse skorlar da silinir.','Saved in this browser. Clearing browser data also removes scores.')));
     content.append(node('h3',t('Son 5 oyun','Last 5 games')));
     if(!data.recent.length)content.append(node('p',t('Henüz tamamlanan bir oyun yok. İlk turunu bitir!','No completed games yet. Finish your first round!')));

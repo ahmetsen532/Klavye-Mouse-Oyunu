@@ -77,3 +77,7 @@ Skorlarım paneli son 5 tamamlanan turu ve kişisel rekorlarını gösterir. Bir
 Kayıtlar sunucuya gönderilmeden tarayıcının localStorage alanında saklanır. Siteyi kapatınca korunur; tarayıcı verileri temizlenirse silinir. Farklı cihazlar ve site adresleri arasında otomatik aktarılmaz. Yerel geliştirme sürümündeki skorlar yayınlanan siteye taşınmaz.
 
 Çeviriler `language.js`, skor kayıtları ve paneli `scores.js` dosyalarındadır.
+
+## Gizlilik ve kayıt tercihi
+
+Gizlilik ve kullanım paneli Türkçe/İngilizce açıklamalar içerir. Yeni skor kaydı varsayılan olarak kapalıdır; Skorlarım panelindeki seçenekle açılır. Kapatmak eski kayıtları silmez; skorları silme düğmesi ayrı bir onayla geçmişi ve rekorları temizler. Dil ve animasyon tercihleri kullanıcı seçimiyle saklanır. GitHub Pages IP kayıtları açıklamada ayrıca belirtilir.
